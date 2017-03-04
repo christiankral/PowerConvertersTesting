@@ -6133,34 +6133,36 @@ General information about AC/DC converters can be found at the
             extent={{-10,-10},{10,10}},
             rotation=90,
             origin={70,-20})));
+      Modelica.Electrical.Analog.Basic.Inductor inductor(L=1E-3) annotation (Placement(transformation(
+            extent={{-10,10},{10,-10}},
+            rotation=180,
+            origin={50,30})));
+      Modelica.Electrical.Analog.Basic.Inductor inductor1(L=1E-3) annotation (Placement(transformation(
+            extent={{-10,10},{10,-10}},
+            rotation=180,
+            origin={50,-10})));
     equation
       if not useHeatPort then
         LossPower = transistor_p.LossPower + diode_n.LossPower + transistor_n.LossPower
            + diode_n.LossPower;
       end if;
       connect(transistor_p.p, dc_p) annotation (Line(
-          points={{30,30},{50,30},{50,60},{-100,60},{-100,100}},
+          points={{30,30},{30,30},{30,32},{30,60},{-100,60},{-100,100}},
           color={0,0,255}));
       connect(transistor_n.n, dc_n) annotation (Line(
           points={{30,-30},{50,-30},{50,-60},{-100,-60},{-100,-100}},
           color={0,0,255}));
-      connect(transistor_p.p, diode_p.n) annotation (Line(
-          points={{30,30},{70,30}},
-          color={0,0,255}));
       connect(transistor_p.n, diode_p.p) annotation (Line(
-          points={{30,10},{70,10}},
-          color={0,0,255}));
-      connect(transistor_n.p, diode_n.n) annotation (Line(
-          points={{30,-10},{70,-10}},
+          points={{30,10},{50,10},{70,10}},
           color={0,0,255}));
       connect(transistor_n.n, diode_n.p) annotation (Line(
           points={{30,-30},{70,-30}},
           color={0,0,255}));
       connect(transistor_p.n, transistor_n.p) annotation (Line(
-          points={{30,10},{50,10},{50,-10},{30,-10}},
+          points={{30,10},{30,10},{30,-10}},
           color={0,0,255}));
       connect(ac, transistor_p.n) annotation (Line(
-          points={{100,0},{50,0},{50,10},{30,10}},
+          points={{100,0},{70,0},{70,10},{30,10}},
           color={0,0,255}));
       connect(transistor_p.heatPort, heatPort) annotation (Line(
           points={{40,20},{40,0},{0,0},{0,-100}},
@@ -6180,6 +6182,10 @@ General information about AC/DC converters can be found at the
       connect(andCondition_n.y, transistor_n.fire) annotation (Line(
           points={{60,-69},{60,-50},{10,-50},{10,-27},{19,-27}},
           color={255,0,255}));
+      connect(diode_p.n, inductor.p) annotation (Line(points={{70,30},{70,30},{60,30}}, color={0,0,255}));
+      connect(inductor.n, dc_p) annotation (Line(points={{40,30},{30,30},{30,60},{-100,60},{-100,100}}, color={0,0,255}));
+      connect(diode_n.n, inductor1.p) annotation (Line(points={{70,-10},{70,-10},{60,-10}}, color={0,0,255}));
+      connect(inductor1.n, transistor_p.n) annotation (Line(points={{40,-10},{40,-10},{30,-10},{30,-8},{30,-8},{30,10},{30,10}}, color={0,0,255}));
       annotation (
         Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{
                 100,100}}), graphics={
