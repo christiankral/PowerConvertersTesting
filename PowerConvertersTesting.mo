@@ -7312,6 +7312,162 @@ This partial model provides parameters and the conditional input signal for the 
                   lineColor={0,0,255})}));
     end Control;
   end Icons;
+
+  package PowerModule
+    model Test
+      extends Modelica.Icons.Example;
+      parameter Modelica.SIunits.Voltage VDC=100;
+      parameter Modelica.SIunits.Resistance R=100;
+      parameter Modelica.SIunits.Inductance L=1;
+      parameter Modelica.SIunits.Frequency f=1000;
+      Modelica.Electrical.Analog.Sources.ConstantVoltage constantVoltage1(V=VDC/2)
+        annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=270,
+            origin={-60,20})));
+      Modelica.Electrical.Analog.Sources.ConstantVoltage constantVoltage2(V=VDC/2)
+        annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=270,
+            origin={-60,-20})));
+      Modelica.Electrical.Analog.Basic.Ground ground annotation (Placement(
+            transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=270,
+            origin={-80,0})));
+      PowerModule.Module module
+        annotation (Placement(transformation(extent={{30,-10},{10,10}})));
+      Modelica.Electrical.PowerConverters.DCDC.Control.SignalPWM signalPWM(
+          constantDutyCycle=0.6, f=f) annotation (Placement(transformation(
+              extent={{10,-10},{-10,10}},
+            rotation=90,
+            origin={50,0})));
+      Modelica.Electrical.Analog.Basic.Resistor resistor(R=R) annotation (
+          Placement(transformation(
+            extent={{10,-10},{-10,10}},
+            rotation=0,
+            origin={-10,0})));
+      Modelica.Electrical.Analog.Basic.Inductor inductor(
+                      L=L, i(start=0))
+                           annotation (Placement(transformation(
+            extent={{10,-10},{-10,10}},
+            rotation=0,
+            origin={-40,0})));
+    equation
+      connect(ground.p, constantVoltage1.n) annotation (Line(points={{-70,0},{-70,0},
+              {-60,0},{-60,10}}, color={0,0,255}));
+      connect(ground.p, constantVoltage2.p)
+        annotation (Line(points={{-70,0},{-60,0},{-60,-10}}, color={0,0,255}));
+      connect(constantVoltage1.p, module.pin_p) annotation (Line(points={{-60,
+              30},{-60,30},{20,30},{20,10}}, color={0,0,255}));
+      connect(constantVoltage2.n, module.pin_n) annotation (Line(points={{-60,
+              -30},{-60,-30},{20,-30},{20,-10}}, color={0,0,255}));
+      connect(signalPWM.fire, module.fire1)
+        annotation (Line(points={{39,6},{32,6}}, color={255,0,255}));
+      connect(signalPWM.notFire, module.fire2)
+        annotation (Line(points={{39,-6},{32,-6}}, color={255,0,255}));
+      connect(ground.p, inductor.n)
+        annotation (Line(points={{-70,0},{-60,0},{-50,0}}, color={0,0,255}));
+      connect(resistor.p, module.pin_0)
+        annotation (Line(points={{0,0},{0,0},{20,0}}, color={0,0,255}));
+      connect(inductor.p, resistor.n)
+        annotation (Line(points={{-30,0},{-25,0},{-20,0}}, color={0,0,255}));
+      annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
+            coordinateSystem(preserveAspectRatio=false)),
+        experiment(StopTime=0.1, Interval=0.0002));
+    end Test;
+
+    model Module
+
+      Modelica.Electrical.Analog.Interfaces.PositivePin pin_p
+        annotation (Placement(transformation(extent={{-10,90},{10,110}})));
+      Modelica.Electrical.Analog.Interfaces.NegativePin pin_n
+        annotation (Placement(transformation(extent={{-10,-90},{10,-110}})));
+      Modelica.Electrical.Analog.Interfaces.NegativePin pin_0
+        annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
+      Modelica.Electrical.Analog.Ideal.IdealGTOThyristor idealGTOThyristor1
+        annotation (Placement(transformation(
+            extent={{-10,10},{10,-10}},
+            rotation=270,
+            origin={-20,50})));
+      Modelica.Electrical.Analog.Ideal.IdealGTOThyristor idealGTOThyristor2
+        annotation (Placement(transformation(
+            extent={{-10,10},{10,-10}},
+            rotation=270,
+            origin={-20,-50})));
+      Modelica.Electrical.Analog.Ideal.IdealDiode idealDiode1 annotation (Placement(
+            transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=90,
+            origin={20,-50})));
+      Modelica.Electrical.Analog.Ideal.IdealDiode idealDiode2 annotation (Placement(
+            transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=90,
+            origin={20,50})));
+      Modelica.Blocks.Interfaces.BooleanInput fire1
+        annotation (Placement(transformation(extent={{-140,40},{-100,80}})));
+      Modelica.Blocks.Interfaces.BooleanInput fire2
+        annotation (Placement(transformation(extent={{-140,-80},{-100,-40}})));
+    equation
+      connect(idealGTOThyristor1.n, pin_0) annotation (Line(points={{-20,40},{-20,40},
+              {-20,0},{0,0}}, color={0,0,255}));
+      connect(pin_0, idealGTOThyristor2.p) annotation (Line(points={{0,0},{-20,0},{-20,
+              0},{-20,0},{-20,-40}}, color={0,0,255}));
+      connect(pin_0, idealDiode2.p)
+        annotation (Line(points={{0,0},{20,0},{20,40}}, color={0,0,255}));
+      connect(pin_0, idealDiode1.n)
+        annotation (Line(points={{0,0},{20,0},{20,-40}}, color={0,0,255}));
+      connect(idealDiode1.p, pin_n) annotation (Line(points={{20,-60},{20,-60},{20,-100},
+              {0,-100}}, color={0,0,255}));
+      connect(idealGTOThyristor2.n, pin_n) annotation (Line(points={{-20,-60},{-20,-60},
+              {-20,-100},{0,-100}}, color={0,0,255}));
+      connect(idealGTOThyristor1.p, pin_p)
+        annotation (Line(points={{-20,60},{-20,100},{0,100}}, color={0,0,255}));
+      connect(idealDiode2.n, pin_p) annotation (Line(points={{20,60},{20,60},{20,100},
+              {0,100}}, color={0,0,255}));
+      connect(fire2, idealGTOThyristor2.fire) annotation (Line(points={{-120,-60},{-80,
+              -60},{-40,-60},{-40,-57},{-31,-57}}, color={255,0,255}));
+      connect(fire1, idealGTOThyristor1.fire) annotation (Line(points={{-120,60},{-80,
+              60},{-40,60},{-40,43},{-31,43}}, color={255,0,255}));
+      annotation (
+        Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+            Polygon(points={{20,50},{40,50},{30,70},{20,50}}, lineColor={28,108,200}),
+            Polygon(points={{20,-70},{40,-70},{30,-50},{20,-70}}, lineColor={28,108,
+                  200}),
+            Polygon(
+              points={{-10,-10},{10,-10},{0,10},{-10,-10}},
+              lineColor={28,108,200},
+              origin={-30,-60},
+              rotation=180),
+            Polygon(
+              points={{-10,-10},{10,-10},{0,10},{-10,-10}},
+              lineColor={28,108,200},
+              origin={-30,60},
+              rotation=180),
+            Line(points={{-40,50},{-20,50}}, color={28,108,200}),
+            Line(points={{20,70},{40,70}}, color={28,108,200}),
+            Line(points={{20,-50},{40,-50}}, color={28,108,200}),
+            Line(points={{-40,-70},{-20,-70}}, color={28,108,200}),
+            Line(points={{-10,100},{-30,100},{-30,-100},{-10,-100}}, color={28,108,200}),
+            Line(
+              points={{10,100},{-10,100},{-10,-100},{10,-100}},
+              color={28,108,200},
+              origin={20,0},
+              rotation=180),
+            Line(points={{-30,0},{30,0}}, color={28,108,200}),
+            Line(points={{-100,60},{-36,60}}, color={255,85,255}),
+            Line(points={{-100,-60},{-36,-60}}, color={255,85,255}),
+            Text(
+              extent={{-100,20},{100,-20}},
+              lineColor={28,108,200},
+              textString="%name",
+              origin={0,-30},
+              rotation=180)}),
+        Diagram(coordinateSystem(preserveAspectRatio=false)));
+    end Module;
+    annotation ();
+  end PowerModule;
   annotation (
     preferredView="info",
     Documentation(info="<html>
