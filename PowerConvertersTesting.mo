@@ -6095,6 +6095,7 @@ General information about AC/DC converters can be found at the
       parameter Modelica.SIunits.Conductance GoffDiode=1e-05
         "Diode opened conductance";
       parameter Modelica.SIunits.Voltage VkneeDiode=0 "Diode threshold voltage";
+      parameter Modelica.SIunits.Inductance L=1E-5 "Leakage inductance between GTO and diode";
       // parameter Boolean useEnable "Enables enable signal connector";
       extends PowerConvertersTesting.Interfaces.DCAC.DCtwoPin;
       extends PowerConvertersTesting.Interfaces.DCAC.ACpin;
@@ -6133,11 +6134,13 @@ General information about AC/DC converters can be found at the
             extent={{-10,-10},{10,10}},
             rotation=90,
             origin={70,-20})));
-      Modelica.Electrical.Analog.Basic.Inductor inductor(L=1E-3) annotation (Placement(transformation(
+      Modelica.Electrical.Analog.Basic.Inductor inductor_p(final L=L)
+                                                                   annotation (Placement(transformation(
             extent={{-10,10},{10,-10}},
             rotation=180,
             origin={50,30})));
-      Modelica.Electrical.Analog.Basic.Inductor inductor1(L=1E-3) annotation (Placement(transformation(
+      Modelica.Electrical.Analog.Basic.Inductor inductor_n(final L=L)
+                                                                   annotation (Placement(transformation(
             extent={{-10,10},{10,-10}},
             rotation=180,
             origin={50,-10})));
@@ -6182,10 +6185,10 @@ General information about AC/DC converters can be found at the
       connect(andCondition_n.y, transistor_n.fire) annotation (Line(
           points={{60,-69},{60,-50},{10,-50},{10,-27},{19,-27}},
           color={255,0,255}));
-      connect(diode_p.n, inductor.p) annotation (Line(points={{70,30},{70,30},{60,30}}, color={0,0,255}));
-      connect(inductor.n, dc_p) annotation (Line(points={{40,30},{30,30},{30,60},{-100,60},{-100,100}}, color={0,0,255}));
-      connect(diode_n.n, inductor1.p) annotation (Line(points={{70,-10},{70,-10},{60,-10}}, color={0,0,255}));
-      connect(inductor1.n, transistor_p.n) annotation (Line(points={{40,-10},{40,-10},{30,-10},{30,-8},{30,-8},{30,10},{30,10}}, color={0,0,255}));
+      connect(diode_p.n, inductor_p.p) annotation (Line(points={{70,30},{70,30},{60,30}}, color={0,0,255}));
+      connect(inductor_p.n, dc_p) annotation (Line(points={{40,30},{30,30},{30,60},{-100,60},{-100,100}}, color={0,0,255}));
+      connect(diode_n.n, inductor_n.p) annotation (Line(points={{70,-10},{70,-10},{60,-10}}, color={0,0,255}));
+      connect(inductor_n.n, transistor_p.n) annotation (Line(points={{40,-10},{40,-10},{30,-10},{30,-8},{30,10}}, color={0,0,255}));
       annotation (
         Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{
                 100,100}}), graphics={
@@ -6262,6 +6265,7 @@ An example of a single phase inverter with PWM voltage control is included in
       parameter Modelica.SIunits.Conductance GoffDiode=1e-05
         "Diode opened conductance";
       parameter Modelica.SIunits.Voltage VkneeDiode=0 "Diode threshold voltage";
+      parameter Modelica.SIunits.Inductance L=1E-5 "Leakage inductance between GTO and diode";
       // parameter Boolean useEnable "Enables enable signal connector";
       extends PowerConvertersTesting.Interfaces.DCAC.DCtwoPin;
       extends PowerConvertersTesting.Interfaces.DCAC.ACplug;
@@ -6316,16 +6320,15 @@ An example of a single phase inverter with PWM voltage control is included in
       Modelica.Thermal.HeatTransfer.Components.ThermalCollector
         thermalCollector(final m=m) if useHeatPort
         annotation (Placement(transformation(extent={{-10,-60},{10,-40}})));
+      Modelica.Electrical.MultiPhase.Basic.Inductor inductor_p(m=m, L=fill(L, m)) annotation (Placement(transformation(extent={{40,20},{60,40}})));
+      Modelica.Electrical.MultiPhase.Basic.Inductor inductor_n(m=m, L=fill(L, m)) annotation (Placement(transformation(extent={{40,-20},{60,0}})));
     equation
       if not useHeatPort then
         LossPower = sum(transistor_p.idealGTOThyristor.LossPower) + sum(diode_n.idealDiode.LossPower)
            + sum(transistor_n.idealGTOThyristor.LossPower) + sum(diode_n.idealDiode.LossPower);
       end if;
       connect(transistor_p.plug_p, star_p.plug_p) annotation (Line(
-          points={{30,30},{50,30},{50,40}},
-          color={0,0,255}));
-      connect(star_p.plug_p, diode_p.plug_n) annotation (Line(
-          points={{50,40},{50,30},{70,30}},
+          points={{30,30},{30,30},{30,38},{30,38},{30,40},{44,40},{44,40},{50,40},{50,40}},
           color={0,0,255}));
       connect(transistor_n.plug_n, star_n.plug_p) annotation (Line(
           points={{30,-30},{50,-30},{50,-40}},
@@ -6335,9 +6338,6 @@ An example of a single phase inverter with PWM voltage control is included in
           color={0,0,255}));
       connect(transistor_p.plug_n, diode_p.plug_p) annotation (Line(
           points={{30,10},{70,10}},
-          color={0,0,255}));
-      connect(transistor_n.plug_p, diode_n.plug_n) annotation (Line(
-          points={{30,-10},{70,-10}},
           color={0,0,255}));
       connect(star_n.pin_n, dc_n) annotation (Line(
           points={{50,-60},{50,-66},{-100,-66},{-100,-100}},
@@ -6349,7 +6349,7 @@ An example of a single phase inverter with PWM voltage control is included in
           points={{30,10},{50,10},{50,0},{100,0}},
           color={0,0,255}));
       connect(transistor_n.plug_p, ac) annotation (Line(
-          points={{30,-10},{50,-10},{50,0},{100,0}},
+          points={{30,-10},{30,-10},{30,0},{30,0},{30,0},{48,0},{48,0},{100,0}},
           color={0,0,255}));
       connect(heatPort, thermalCollector.port_b) annotation (Line(
           points={{0,-100},{0,-60}},
@@ -6372,6 +6372,10 @@ An example of a single phase inverter with PWM voltage control is included in
       connect(andCondition_n.y, transistor_n.fire) annotation (Line(
           points={{60,-69},{60,-64},{16,-64},{16,-27},{19,-27}},
           color={255,0,255}));
+      connect(inductor_p.plug_p, transistor_p.plug_p) annotation (Line(points={{40,30},{35,30},{30,30}}, color={0,0,255}));
+      connect(inductor_p.plug_n, diode_p.plug_n) annotation (Line(points={{60,30},{65,30},{70,30}}, color={0,0,255}));
+      connect(inductor_n.plug_p, transistor_n.plug_p) annotation (Line(points={{40,-10},{30,-10}}, color={0,0,255}));
+      connect(inductor_n.plug_n, diode_n.plug_n) annotation (Line(points={{60,-10},{65,-10},{70,-10}}, color={0,0,255}));
       annotation (
         Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{
                 100,100}}), graphics={
