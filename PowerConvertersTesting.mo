@@ -7335,10 +7335,11 @@ This partial model provides parameters and the conditional input signal for the 
             extent={{-10,-10},{10,10}},
             rotation=270,
             origin={-80,0})));
-      PowerModule.Module module
-        annotation (Placement(transformation(extent={{30,-10},{10,10}})));
+      ModuleC module(useHeatPort=false)
+        annotation (Placement(transformation(extent={{10,-10},{30,10}})));
       Modelica.Electrical.PowerConverters.DCDC.Control.SignalPWM signalPWM(
-          constantDutyCycle=0.6, f=f) annotation (Placement(transformation(
+          constantDutyCycle=0.6, f=f,
+        useConstantDutyCycle=false)   annotation (Placement(transformation(
               extent={{10,-10},{-10,10}},
             rotation=90,
             origin={50,0})));
@@ -7353,6 +7354,11 @@ This partial model provides parameters and the conditional input signal for the 
             extent={{10,-10},{-10,10}},
             rotation=0,
             origin={-40,0})));
+      Modelica.Blocks.Sources.Ramp ramp(duration=1, startTime=0.5) annotation (
+          Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=270,
+            origin={50,30})));
     equation
       connect(ground.p, constantVoltage1.n) annotation (Line(points={{-70,0},{-70,0},
               {-60,0},{-60,10}}, color={0,0,255}));
@@ -7363,92 +7369,138 @@ This partial model provides parameters and the conditional input signal for the 
       connect(constantVoltage2.n, module.pin_n) annotation (Line(points={{-60,
               -30},{-60,-30},{20,-30},{20,-10}}, color={0,0,255}));
       connect(signalPWM.fire, module.fire1)
-        annotation (Line(points={{39,6},{32,6}}, color={255,0,255}));
+        annotation (Line(points={{39,6},{30,6}}, color={255,0,255}));
       connect(signalPWM.notFire, module.fire2)
-        annotation (Line(points={{39,-6},{32,-6}}, color={255,0,255}));
+        annotation (Line(points={{39,-6},{30,-6}}, color={255,0,255}));
       connect(ground.p, inductor.n)
         annotation (Line(points={{-70,0},{-60,0},{-50,0}}, color={0,0,255}));
       connect(resistor.p, module.pin_0)
         annotation (Line(points={{0,0},{0,0},{20,0}}, color={0,0,255}));
       connect(inductor.p, resistor.n)
         annotation (Line(points={{-30,0},{-25,0},{-20,0}}, color={0,0,255}));
+      connect(ramp.y, signalPWM.dutyCycle)
+        annotation (Line(points={{50,19},{50,12}}, color={0,0,127}));
       annotation (Icon(coordinateSystem(preserveAspectRatio=false)), Diagram(
             coordinateSystem(preserveAspectRatio=false)),
-        experiment(StopTime=0.1, Interval=0.0002));
+        experiment(StopTime=1.5, Interval=0.0002));
     end Test;
 
-    model Module
-
+    model ModuleC
+      extends Modelica.Thermal.HeatTransfer.Interfaces.PartialConditionalHeatPort;
+      parameter Modelica.SIunits.Resistance RonSwitch=1.E-5
+        "Switch: Forward state-on differential resistance (closed resistance)";
+      parameter Modelica.SIunits.Conductance GoffSwitch=1.E-5
+        "Switch: Backward state-off conductance (opened conductance)";
+      parameter Modelica.SIunits.Voltage VkneeSwitch=0
+        "Switch: Forward threshold voltage";
+      parameter Modelica.SIunits.Resistance RonDiode=1.E-5
+        "Diode: Forward state-on differential resistance (closed resistance)";
+      parameter Modelica.SIunits.Conductance GoffDiode=1.E-5
+        "Diode: Backward state-off conductance (opened conductance)";
+      parameter Modelica.SIunits.Voltage VkneeDiode=0
+        "Diode: Forward threshold voltage";
       Modelica.Electrical.Analog.Interfaces.PositivePin pin_p
         annotation (Placement(transformation(extent={{-10,90},{10,110}})));
       Modelica.Electrical.Analog.Interfaces.NegativePin pin_n
         annotation (Placement(transformation(extent={{-10,-90},{10,-110}})));
       Modelica.Electrical.Analog.Interfaces.NegativePin pin_0
         annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
-      Modelica.Electrical.Analog.Ideal.IdealGTOThyristor idealGTOThyristor1
-        annotation (Placement(transformation(
-            extent={{-10,10},{10,-10}},
-            rotation=270,
-            origin={-20,50})));
-      Modelica.Electrical.Analog.Ideal.IdealGTOThyristor idealGTOThyristor2
-        annotation (Placement(transformation(
-            extent={{-10,10},{10,-10}},
-            rotation=270,
-            origin={-20,-50})));
-      Modelica.Electrical.Analog.Ideal.IdealDiode idealDiode1 annotation (Placement(
-            transformation(
-            extent={{-10,-10},{10,10}},
-            rotation=90,
-            origin={20,-50})));
-      Modelica.Electrical.Analog.Ideal.IdealDiode idealDiode2 annotation (Placement(
-            transformation(
-            extent={{-10,-10},{10,10}},
-            rotation=90,
-            origin={20,50})));
       Modelica.Blocks.Interfaces.BooleanInput fire1
-        annotation (Placement(transformation(extent={{-140,40},{-100,80}})));
+        annotation (Placement(transformation(extent={{120,40},{80,80}})));
       Modelica.Blocks.Interfaces.BooleanInput fire2
-        annotation (Placement(transformation(extent={{-140,-80},{-100,-40}})));
+        annotation (Placement(transformation(extent={{120,-80},{80,-40}})));
+      Modelica.Electrical.Analog.Ideal.IdealGTOThyristor switch1(
+        final Ron=RonSwitch,
+        final Goff=GoffSwitch,
+        final Vknee=VkneeSwitch,
+        final useHeatPort=true) annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=270,
+            origin={20,50})));
+      Modelica.Electrical.Analog.Ideal.IdealDiode diode1(
+        final Ron=RonDiode,
+        final Goff=GoffDiode,
+        final Vknee=VkneeDiode,
+        final useHeatPort=true) annotation (Placement(transformation(
+            extent={{-10,10},{10,-10}},
+            rotation=90,
+            origin={-20,-50})));
+      Modelica.Electrical.Analog.Ideal.IdealGTOThyristor switch2(
+        final Ron=RonSwitch,
+        final Goff=GoffSwitch,
+        final Vknee=VkneeSwitch,
+        final useHeatPort=true) annotation (Placement(transformation(
+            extent={{-10,-10},{10,10}},
+            rotation=270,
+            origin={20,-50})));
+      Modelica.Electrical.Analog.Ideal.IdealDiode diode2(
+        final Ron=RonDiode,
+        final Goff=GoffDiode,
+        final Vknee=VkneeDiode,
+        final useHeatPort=true) annotation (Placement(transformation(
+            extent={{-10,10},{10,-10}},
+            rotation=90,
+            origin={-20,50})));
     equation
-      connect(idealGTOThyristor1.n, pin_0) annotation (Line(points={{-20,40},{-20,40},
-              {-20,0},{0,0}}, color={0,0,255}));
-      connect(pin_0, idealGTOThyristor2.p) annotation (Line(points={{0,0},{-20,0},{-20,
-              0},{-20,0},{-20,-40}}, color={0,0,255}));
-      connect(pin_0, idealDiode2.p)
-        annotation (Line(points={{0,0},{20,0},{20,40}}, color={0,0,255}));
-      connect(pin_0, idealDiode1.n)
+      connect(pin_0, diode1.n)
+        annotation (Line(points={{0,0},{-20,0},{-20,-40}}, color={0,0,255}));
+      connect(switch1.p, pin_p)
+        annotation (Line(points={{20,60},{20,100},{0,100}}, color={0,0,255}));
+      connect(pin_p, diode2.n) annotation (Line(points={{0,100},{-10,100},{-20,100},
+              {-20,60}}, color={0,0,255}));
+      connect(fire1, switch1.fire) annotation (Line(points={{100,60},{100,60},{40,
+              60},{40,43},{31,43}}, color={255,0,255}));
+      connect(fire2, switch2.fire) annotation (Line(points={{100,-60},{40,-60},{40,
+              -57},{31,-57}}, color={255,0,255}));
+      connect(pin_0, switch2.p)
         annotation (Line(points={{0,0},{20,0},{20,-40}}, color={0,0,255}));
-      connect(idealDiode1.p, pin_n) annotation (Line(points={{20,-60},{20,-60},{20,-100},
+      connect(pin_0, switch1.n)
+        annotation (Line(points={{0,0},{20,0},{20,40}}, color={0,0,255}));
+      connect(pin_0, diode2.p) annotation (Line(points={{0,0},{-10,0},{-20,0},{-20,
+              40}}, color={0,0,255}));
+      connect(pin_n, diode1.p) annotation (Line(points={{0,-100},{-20,-100},{-20,-60}},
+            color={0,0,255}));
+      connect(switch2.n, pin_n) annotation (Line(points={{20,-60},{20,-60},{20,-100},
               {0,-100}}, color={0,0,255}));
-      connect(idealGTOThyristor2.n, pin_n) annotation (Line(points={{-20,-60},{-20,-60},
-              {-20,-100},{0,-100}}, color={0,0,255}));
-      connect(idealGTOThyristor1.p, pin_p)
-        annotation (Line(points={{-20,60},{-20,100},{0,100}}, color={0,0,255}));
-      connect(idealDiode2.n, pin_p) annotation (Line(points={{20,60},{20,60},{20,100},
-              {0,100}}, color={0,0,255}));
-      connect(fire2, idealGTOThyristor2.fire) annotation (Line(points={{-120,-60},{-80,
-              -60},{-40,-60},{-40,-57},{-31,-57}}, color={255,0,255}));
-      connect(fire1, idealGTOThyristor1.fire) annotation (Line(points={{-120,60},{-80,
-              60},{-40,60},{-40,43},{-31,43}}, color={255,0,255}));
+      connect(diode2.heatPort, internalHeatPort) annotation (Line(points={{-30,50},
+              {-66,50},{-100,50},{-100,-80}}, color={191,0,0}));
+      connect(diode1.heatPort, internalHeatPort) annotation (Line(points={{-30,-50},
+              {-100,-50},{-100,-80}}, color={191,0,0}));
+      connect(switch1.heatPort, internalHeatPort) annotation (Line(points={{10,50},
+              {10,20},{-100,20},{-100,-80}}, color={191,0,0}));
+      connect(switch2.heatPort, internalHeatPort) annotation (Line(points={{10,-50},
+              {10,-20},{-100,-20},{-100,-80}}, color={191,0,0}));
       annotation (
         Icon(coordinateSystem(preserveAspectRatio=false), graphics={
-            Polygon(points={{20,50},{40,50},{30,70},{20,50}}, lineColor={28,108,200}),
-            Polygon(points={{20,-70},{40,-70},{30,-50},{20,-70}}, lineColor={28,108,
-                  200}),
+            Rectangle(
+              extent={{-50,100},{50,-100}},
+              lineColor={95,95,95},
+              fillColor={215,215,215},
+              fillPattern=FillPattern.Solid),
+            Polygon(points={{-10,-10},{10,-10},{0,10},{-10,-10}},
+                                                              lineColor={28,108,200},
+              origin={30,60},
+              rotation=180),
+            Polygon(points={{-10,-10},{10,-10},{0,10},{-10,-10}}, lineColor={28,108,
+                  200},
+              origin={30,-60},
+              rotation=180),
             Polygon(
               points={{-10,-10},{10,-10},{0,10},{-10,-10}},
               lineColor={28,108,200},
               origin={-30,-60},
-              rotation=180),
+              rotation=360),
             Polygon(
               points={{-10,-10},{10,-10},{0,10},{-10,-10}},
               lineColor={28,108,200},
               origin={-30,60},
-              rotation=180),
-            Line(points={{-40,50},{-20,50}}, color={28,108,200}),
-            Line(points={{20,70},{40,70}}, color={28,108,200}),
-            Line(points={{20,-50},{40,-50}}, color={28,108,200}),
-            Line(points={{-40,-70},{-20,-70}}, color={28,108,200}),
+              rotation=360),
+            Line(points={{-40,70},{-20,70}}, color={28,108,200}),
+            Line(points={{20,50},{40,50}}, color={28,108,200}),
+            Line(points={{20,-70},{40,-70}}, color={28,108,200}),
+            Line(points={{-10,0},{10,0}},      color={28,108,200},
+              origin={-30,-50},
+              rotation=360),
             Line(points={{-10,100},{-30,100},{-30,-100},{-10,-100}}, color={28,108,200}),
             Line(
               points={{10,100},{-10,100},{-10,-100},{10,-100}},
@@ -7456,8 +7508,105 @@ This partial model provides parameters and the conditional input signal for the 
               origin={20,0},
               rotation=180),
             Line(points={{-30,0},{30,0}}, color={28,108,200}),
-            Line(points={{-100,60},{-36,60}}, color={255,85,255}),
-            Line(points={{-100,-60},{-36,-60}}, color={255,85,255}),
+            Line(points={{36,60},{100,60}},   color={255,85,255}),
+            Line(points={{36,-60},{100,-60}},   color={255,85,255}),
+            Text(
+              extent={{-100,20},{100,-20}},
+              lineColor={28,108,200},
+              textString="%name",
+              origin={0,-30},
+              rotation=180)}),
+        Diagram(coordinateSystem(preserveAspectRatio=false)));
+    end ModuleC;
+
+    model Module
+      extends Modelica.Thermal.HeatTransfer.Interfaces.PartialElementaryConditionalHeatPort;
+      parameter Modelica.SIunits.Resistance RonSwitch=1.E-5
+        "Switch: Forward state-on differential resistance (closed resistance)";
+      parameter Modelica.SIunits.Conductance GoffSwitch=1.E-5
+        "Switch: Backward state-off conductance (opened conductance)";
+      parameter Modelica.SIunits.Voltage VkneeSwitch=0
+        "Switch: Forward threshold voltage";
+      parameter Modelica.SIunits.Resistance RonDiode=1.E-5
+        "Diode: Forward state-on differential resistance (closed resistance)";
+      parameter Modelica.SIunits.Conductance GoffDiode=1.E-5
+        "Diode: Backward state-off conductance (opened conductance)";
+      parameter Modelica.SIunits.Voltage VkneeDiode=0
+        "Diode: Forward threshold voltage";
+      Modelica.Electrical.Analog.Interfaces.PositivePin pin_p
+        annotation (Placement(transformation(extent={{-10,90},{10,110}})));
+      Modelica.Electrical.Analog.Interfaces.NegativePin pin_n
+        annotation (Placement(transformation(extent={{-10,-90},{10,-110}})));
+      Modelica.Electrical.Analog.Interfaces.NegativePin pin_0
+        annotation (Placement(transformation(extent={{-10,-10},{10,10}})));
+      Modelica.Blocks.Interfaces.BooleanInput fire1
+        annotation (Placement(transformation(extent={{120,40},{80,80}})));
+      Modelica.Blocks.Interfaces.BooleanInput fire2
+        annotation (Placement(transformation(extent={{120,-80},{80,-40}})));
+      Modelica.SIunits.Voltage v1=pin_p.v - pin_0.v;
+      Modelica.SIunits.Voltage v2=pin_0.v - pin_n.v;
+      Modelica.SIunits.Current iSwitch1, iDiode1, iSwitch2, iDiode2;
+      Modelica.SIunits.Power lossSwitch1, lossDiode1, lossSwitch2, lossDiode2;
+    protected
+      ModuleState state1(start=ModuleState.s0d0), state2(start=ModuleState.s0d0);
+      Real sSwitch1(start=0), sDiode1(start=0), sSwitch2(start=0), sDiode2(start=0);
+    equation
+      pin_p.i =  iSwitch1 - iDiode2;
+      -pin_n.i = iSwitch2 - iDiode1;
+      pin_0.i = -iSwitch1 - iDiode1 + iSwitch2 + iDiode2;
+      v1 =  sSwitch1*(if state1==ModuleState.s1d0 then RonSwitch else 1) + VkneeSwitch;
+      iSwitch1 = sSwitch1*(if state1==ModuleState.s1d0 then 1 else GoffSwitch) + GoffSwitch*VkneeSwitch;
+      lossSwitch1 = v1*iSwitch1;
+      v2 =  sDiode1 *(if state1==ModuleState.s0d1 then RonDiode  else 1) + VkneeDiode;
+      iDiode1 = sDiode1*(if state1==ModuleState.s0d1 then 1 else GoffDiode) + GoffDiode*VkneeDiode;
+      lossDiode1 = v2*iDiode1;
+      -v2 = sSwitch2*(if state2==ModuleState.s1d0 then RonSwitch else 1) + VkneeSwitch;
+      iSwitch2 = sSwitch2*(if state2==ModuleState.s1d0 then 1 else GoffSwitch) + GoffSwitch*VkneeSwitch;
+      lossSwitch2 = -v2*iSwitch2;
+      lossPower = lossSwitch1 + lossDiode1 + lossSwitch2 + lossDiode2;
+      -v1 = sDiode2 *(if state2==ModuleState.s0d1 then RonDiode  else 1) + VkneeDiode;
+      iDiode2 = sDiode2*(if state2==ModuleState.s0d1 then 1 else GoffDiode) + GoffDiode*VkneeDiode;
+      lossDiode2 = -v1*iDiode2;
+      annotation (
+        Icon(coordinateSystem(preserveAspectRatio=false), graphics={
+            Rectangle(
+              extent={{-50,100},{50,-100}},
+              lineColor={95,95,95},
+              fillColor={215,215,215},
+              fillPattern=FillPattern.Solid),
+            Polygon(points={{-10,-10},{10,-10},{0,10},{-10,-10}},
+                                                              lineColor={28,108,200},
+              origin={30,60},
+              rotation=180),
+            Polygon(points={{-10,-10},{10,-10},{0,10},{-10,-10}}, lineColor={28,108,
+                  200},
+              origin={30,-60},
+              rotation=180),
+            Polygon(
+              points={{-10,-10},{10,-10},{0,10},{-10,-10}},
+              lineColor={28,108,200},
+              origin={-30,-60},
+              rotation=360),
+            Polygon(
+              points={{-10,-10},{10,-10},{0,10},{-10,-10}},
+              lineColor={28,108,200},
+              origin={-30,60},
+              rotation=360),
+            Line(points={{-40,70},{-20,70}}, color={28,108,200}),
+            Line(points={{20,50},{40,50}}, color={28,108,200}),
+            Line(points={{20,-70},{40,-70}}, color={28,108,200}),
+            Line(points={{-10,0},{10,0}},      color={28,108,200},
+              origin={-30,-50},
+              rotation=360),
+            Line(points={{-10,100},{-30,100},{-30,-100},{-10,-100}}, color={28,108,200}),
+            Line(
+              points={{10,100},{-10,100},{-10,-100},{10,-100}},
+              color={28,108,200},
+              origin={20,0},
+              rotation=180),
+            Line(points={{-30,0},{30,0}}, color={28,108,200}),
+            Line(points={{36,60},{100,60}},   color={255,85,255}),
+            Line(points={{36,-60},{100,-60}},   color={255,85,255}),
             Text(
               extent={{-100,20},{100,-20}},
               lineColor={28,108,200},
@@ -7466,7 +7615,11 @@ This partial model provides parameters and the conditional input signal for the 
               rotation=180)}),
         Diagram(coordinateSystem(preserveAspectRatio=false)));
     end Module;
-    annotation ();
+
+    type ModuleState = enumeration(
+        s0d0 "Switch off and Diode off",
+        s1d0 "Switch on  and Diode off",
+        s0d1 "Switch off and Diode on");
   end PowerModule;
   annotation (
     preferredView="info",
